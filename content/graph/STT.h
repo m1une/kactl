@@ -1,3 +1,12 @@
+/**
+ * Author: miie
+ * Date: 2026-11-05
+ * Description: Static top tree for maintaining tree DP under vertex updates.
+ * Takes a nonempty tree and a root (default 0). DP must define Data and
+ * static rake(a, b) and compress(a, b) operations returning Data.
+ * Call init(f) with the initial vertex data, then set(v, d) to update a
+ * vertex and get() to obtain the aggregate for the whole tree.
+ */
 #pragma once
 
 template <class DP> struct StaticTopTree {
