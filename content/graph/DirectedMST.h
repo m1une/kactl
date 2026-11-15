@@ -51,24 +51,24 @@ pair<ll, vi> dmst(int n, int r, vector<Edge>& g) {
 			Edge e = heap[u]->top();
 			heap[u]->delta -= e.w, pop(heap[u]);
 			Q[qi] = e, path[qi++] = u, seen[u] = s;
-			res += e.w, u = uf.find(e.a);
+			res += e.w, u = uf.leader(e.a);
 			if (seen[u] == s) { /// found cycle, contract
 				Node* cyc = 0;
 				int end = qi, time = uf.time();
 				do cyc = merge(cyc, heap[w = path[--qi]]);
-				while (uf.join(u, w));
-				u = uf.find(u), heap[u] = cyc, seen[u] = -1;
+				while (uf.merge(u, w));
+				u = uf.leader(u), heap[u] = cyc, seen[u] = -1;
 				cycs.push_front({u, time, {&Q[qi], &Q[end]}});
 			}
 		}
-		rep(i,0,qi) in[uf.find(Q[i].b)] = Q[i];
+		rep(i,0,qi) in[uf.leader(Q[i].b)] = Q[i];
 	}
 
 	for (auto& [u,t,comp] : cycs) { // restore sol (optional)
 		uf.rollback(t);
 		Edge inEdge = in[u];
-		for (auto& e : comp) in[uf.find(e.b)] = e;
-		in[uf.find(inEdge.b)] = inEdge;
+		for (auto& e : comp) in[uf.leader(e.b)] = e;
+		in[uf.leader(inEdge.b)] = inEdge;
 	}
 	rep(i,0,n) par[i] = in[i].a;
 	return {res, par};

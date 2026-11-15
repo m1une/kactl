@@ -9,7 +9,7 @@ int main() {
 	rep(it,0,10000) {
 		int N = rand() % 20 + 1;
 		LinkCut lc(N);
-		UF uf(N);
+		dsu uf(N);
 		vector<pii> edges;
 		rep(it2,0,1000) {
 			int v = (rand() >> 4) & 3;
@@ -25,9 +25,9 @@ int main() {
 			} else {
 				int a = (rand() >> 4) % N;
 				int b = (rand() >> 4) % N;
-				uf.e.assign(N, -1);
-				for(auto &ed: edges) uf.join(ed.first, ed.second);
-				bool c = uf.sameSet(a, b);
+				uf.par.assign(N, -1);
+				for(auto &ed: edges) uf.merge(ed.first, ed.second);
+				bool c = uf.same(a, b);
 				if (!c && v != 1) {
 					lc.link(a, b);
 					edges.emplace_back(a, b);
