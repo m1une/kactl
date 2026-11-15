@@ -40,7 +40,7 @@ int main() {
 	for (int N = 0; N <= 4; N++) {
 		// cout << "N = " << N << endl;
 		vector<vi> mat(N, vi(N)), adj(N);
-		vi compsize(N), seen(N);
+		vi seen(N);
 		int count = 0;
 		rep(bits,0,(1 << (N*N))) {
 			// if (bits % 10000 == 0) cerr << "." << flush;
@@ -57,25 +57,22 @@ int main() {
 				}
 			}
 			vi comp2 = old::scc(adj);
-			scc(adj, [&](vi& v) {
-				compsize[ncomps] = sz(v);
-			});
-			if (comp != comp2) {
-				for(auto &x: comp) cout << x << ' ';
-				cout << endl;
-				for(auto &x: comp2) cout << x << ' ';
-				cout << endl;
-			}
-			rep(i,0,N) assert(comp[i] >= 0 && comp[i] < ncomps);
-			rep(i,0,N) for(auto &j: adj[i]) assert(comp[j] <= comp[i]);
+			scc_graph sg(N);
+			rep(i,0,N) for (int j : adj[i]) sg.add_edge(i, j);
+			vector<vi> groups = sg.scc();
+			assert(scc_graph(adj).scc() == groups);
+			vi comp3(N);
+			rep(i,0,sz(groups)) for (int v : groups[i]) comp3[v] = i;
+			rep(i,0,N) assert(comp3[i] == sz(groups) - 1 - comp2[i]);
+			rep(i,0,N) for (int j : adj[i]) assert(comp3[i] <= comp3[j]);
 			rep(i,0,N) {
 				seen.assign(N, 0); seen[i] = 1;
 				rep(it,0,N) {
 					rep(j,0,N) if (seen[j]) for(auto &k: adj[j]) seen[k] = 1;
 				}
 				rep(j,0,N) {
-					if (seen[j]) assert(comp[j] <= comp[i]);
-					else assert(comp[j] != comp[i]);
+					if (seen[j]) assert(comp3[i] <= comp3[j]);
+					else assert(comp3[j] != comp3[i]);
 				}
 			}
 
