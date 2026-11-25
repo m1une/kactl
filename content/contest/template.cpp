@@ -5,7 +5,7 @@ using namespace std;
 #pragma GCC optimize("unroll-loops")
 
 #define rep(i, a, b) for(long long i = (a); i < (b); ++i)
-#define all(x) begin(x), end(x)
+#define all(x) (x).begin(), (x).end()
 #define sz(x) (int)(x).size()
 #define UNIQUE(x) (x).erase(unique(all(x)), (x).end())
 using ll = long long;
