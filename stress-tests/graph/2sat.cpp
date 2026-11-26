@@ -6,7 +6,7 @@ int main1() {
 	const int N = 100000, M = 10000000;
 	// Random constraints, unsolvable
 	{
-		TwoSat ts(N);
+		two_sat ts(N);
 		rep(i,0,M) {
 			int r = rand();
 			int s = r;
@@ -15,15 +15,15 @@ int main1() {
 			r >>= 5;
 			int b = r % N;
 			if (a == b) continue;
-			ts.either(a ^ (s&1 ? 0 : -1), b ^ (s&2 ? 0 : -1));
+			ts.add_clause(a, s&1, b, s&2);
 		}
-		assert(ts.solve() == 0);
+		assert(!ts.satisfiable());
 	}
 	// Random solvable instance
 	{
 		vector<bool> v(N);
 		rep(i,0,N) v[i] = rand() & (1 << 20);
-		TwoSat ts(N);
+		two_sat ts(N);
 		rep(i,0,M) {
 			int r = rand();
 			int s = r;
@@ -32,21 +32,23 @@ int main1() {
 			r >>= 5;
 			int b = r % N;
 			if (a == b) continue;
-			ts.either(a ^ (v[a] ? 0 : -1), b ^ (s&1 ? 0 : -1));
+			ts.add_clause(a, v[a], b, s&1);
 		}
-		assert(ts.solve() == 1);
+		assert(ts.satisfiable());
 	}
 	return 0;
 }
 
 int main2() {
 	int N = 4;
-	TwoSat ts(N);
-	ts.either(0,1);
-	ts.either(0,~1);
-	ts.either(~2,~3);
-	assert(ts.solve()==1);
-	assert(ts.values == vi({1, 1, 0, 0}));
+	two_sat ts(N);
+	ts.add_clause(0, true, 1, true);
+	ts.add_clause(0, true, 1, false);
+	ts.add_clause(2, false, 3, false);
+	assert(ts.satisfiable());
+	auto ans = ts.answer();
+	assert((ans[0] || ans[1]) && (ans[0] || !ans[1]));
+	assert(!ans[2] || !ans[3]);
 	return 0;
 }
 
@@ -57,47 +59,32 @@ int ra() {
 	return X >> 1;
 }
 
-// Test at_most_one
 int main() {
 	main1();
 	main2();
-	const int N = 100, M = 400;
-	rep(it,0,100) {
-		vector<bool> v(N);
-		rep(i,0,N) v[i] = ra() & (1 << 20);
-		TwoSat ts(N);
-		vector<vi> atm;
-		vi r;
+	assert(two_sat(0).satisfiable());
+	rep(it,0,10000) {
+		int N = ra() % 8 + 1, M = ra() % 30;
+		two_sat ts(N);
+		vector<array<int, 4>> clauses;
 		rep(i,0,M) {
-			if (ra()%100 < 5) {
-				int r = ra();
-				int s = r;
-				r >>= 2;
-				int a = r % N;
-				r >>= 5;
-				int b = r % N;
-				if (a == b) continue;
-				ts.either(v[a] ? a : ~a, (s&1) ? b : ~b);
-			} else {
-				int k = ra() % 4 + 1;
-				r.clear();
-				rep(ki,0,k-1) {
-					int a = ra() % N;
-					r.push_back(v[a] ? ~a : a);
-				}
-				r.push_back(ra() % (2*N) - N);
-				random_shuffle(all(r), [](int x) { return ra() % x; });
-				ts.atMostOne(r);
-				atm.push_back(r);
-			}
+			int a = ra() % N, b = ra() % N;
+			bool f = ra() & 1, g = ra() & 1;
+			ts.add_clause(a, f, b, g);
+			clauses.push_back({a, f, b, g});
 		}
-		assert(ts.solve());
-		int to = 0;
-		rep(i,0,N) to += (ts.values[i] == v[i]);
-		for(auto &r: atm) {
-			int co = 0;
-			for(auto &x: r) co += (ts.values[max(x, ~x)] == (x >= 0));
-			assert(co <= 1);
+		bool possible = false;
+		rep(mask,0,1 << N) {
+			bool ok = true;
+			for (auto [a,f,b,g] : clauses)
+				ok &= (((mask >> a) & 1) == f || ((mask >> b) & 1) == g);
+			possible |= ok;
+		}
+		assert(ts.satisfiable() == possible);
+		if (possible) {
+			auto ans = ts.answer();
+			for (auto [a,f,b,g] : clauses)
+				assert(ans[a] == f || ans[b] == g);
 		}
 	}
 	cout<<"Tests passed!"<<endl;

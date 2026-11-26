@@ -17,14 +17,27 @@
 
 #include "../data-structures/LazySegmentTree.h"
 
+namespace hld_detail {
+int op(int a, int b) { return max(a, b); }
+int e() { return INT_MIN; }
+struct F { int a, b; };
+int mapping(F f, int x) { return x == e() && f.a ? e() : f.a * x + f.b; }
+F composition(F f, F g) { return {f.a * g.a, f.a * g.b + f.b}; }
+F id() { return {1, 0}; }
+using Tree = LazySegTree<int, op, e, F, mapping, composition, id>;
+}
+
 template <bool VALS_EDGES> struct HLD {
 	int N, tim = 0;
 	vector<vi> adj;
 	vi par, siz, rt, pos;
-	Node *tree;
+	hld_detail::Tree *tree;
 	HLD(vector<vi> adj_)
 		: N(sz(adj_)), adj(adj_), par(N, -1), siz(N, 1),
-		  rt(N),pos(N),tree(new Node(0, N)){ dfsSz(0); dfsHld(0); }
+		  rt(N),pos(N),tree(new hld_detail::Tree(0, N)) {
+		tree->apply(0, N, {0, 0});
+		dfsSz(0); dfsHld(0);
+	}
 	~HLD() { delete tree; }
 	HLD(const HLD&) = delete;
 	HLD& operator=(const HLD&) = delete;
@@ -53,16 +66,16 @@ template <bool VALS_EDGES> struct HLD {
 		op(pos[u] + VALS_EDGES, pos[v] + 1);
 	}
 	void modifyPath(int u, int v, int val) {
-		process(u, v, [&](int l, int r) { tree->add(l, r, val); });
+		process(u, v, [&](int l, int r) { tree->apply(l, r, {1, val}); });
 	}
 	int queryPath(int u, int v) { // Modify depending on problem
 		int res = -1e9;
 		process(u, v, [&](int l, int r) {
-				res = max(res, tree->query(l, r));
+				res = max(res, tree->prod(l, r));
 		});
 		return res;
 	}
 	int querySubtree(int v) { // modifySubtree is similar
-		return tree->query(pos[v] + VALS_EDGES, pos[v] + siz[v]);
+		return tree->prod(pos[v] + VALS_EDGES, pos[v] + siz[v]);
 	}
 };
